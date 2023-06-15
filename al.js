@@ -87,63 +87,6 @@ function preprocess(match, query) {
   ]);
 }
 
-// const anime1 = {
-//   preprocess(match, query) {
-//     let alts = [
-//       ...Object.values(match.title).filter(title => typeof title === "string"),
-//       ...match.synonyms
-//     ];
-//     return {
-//       alts,
-//       distance: Math.min(...alts.map(alt => wdl(query, alt))),
-//       match
-//     };
-//   },
-//   transformProcessed(preprocessed) {
-//     let match = preprocessed.match;
-//     let next = new Date(match.nextAiringEpisode?.airingAt * 1000);
-//     return {
-//       title: match.title.romaji,
-//       jp: match.title.native,
-//       alts: preprocessed.alts,
-//       link: `https://anilist.co/anime/${match.id}`,
-//       malLink: `https://myanimelist.net/anime/${match.idMal}`,
-//       format: formatMap[match.format],
-//       year: match.startDate.year,
-//       status: statusMap[match.status],
-//       genres: match.genres.join(", "),
-//       description: match.description,
-//       episodes: match.episodes,
-//       ...match.nextAiringEpisode && {
-//         nextEpisode: match.nextAiringEpisode.episode,
-//         next: {
-//           days: Math.floor(
-//               match.nextAiringEpisode.timeUntilAiring / (60 * 60 * 24)),
-//           hours: Math.floor(
-//               match.nextAiringEpisode.timeUntilAiring / (60 * 60)) % 24,
-//           minutes: Math.floor(match.nextAiringEpisode.timeUntilAiring / 60)
-//               % 60,
-//           url: `https://www.timeanddate.com/worldclock/fixedtime.html?iso=${
-//               next.getUTCFullYear().toString().padStart(4, '0')
-//           }${
-//               (next.getUTCMonth() + 1).toString().padStart(2, '0')
-//           }${
-//               next.getUTCDate().toString().padStart(2, '0')
-//           }T${
-//               next.getUTCHours().toString().padStart(2, '0')
-//           }${
-//               next.getUTCMinutes().toString().padStart(2, '0')
-//           }`
-//         }
-//       },
-//       distance: preprocessed.distance
-//     };
-//   },
-//   transform(match, query) {
-//     return this.transformProcessed(this.preprocess(match, query));
-//   }
-// };
-
 function anime(entry, query="") {
   if (!entry.preprocessed) {
     entry = preprocess(entry, query);
@@ -192,86 +135,6 @@ function animeLink(entry) {
   let match = entry.preprocessed ? entry.match : entry;
   return `https://anilist.co/anime/${match.id}`;
 }
-
-// function anime0(match, query) {
-//   let alts = [
-//     ...Object.values(match.title).filter(title => typeof title === "string"),
-//     ...match.synonyms
-//   ];
-//   let next = new Date(match.nextAiringEpisode?.airingAt * 1000);
-//   return {
-//     title: match.title.romaji,
-//     jp: match.title.native,
-//     alts,
-//     link: `https://anilist.co/anime/${match.id}`,
-//     malLink: `https://myanimelist.net/anime/${match.idMal}`,
-//     format: formatMap[match.format],
-//     year: match.startDate.year,
-//     status: statusMap[match.status],
-//     genres: match.genres.join(", "),
-//     description: match.description,
-//     episodes: match.episodes,
-//     ...match.nextAiringEpisode && {
-//       nextEpisode: match.nextAiringEpisode.episode,
-//       next: {
-//         days: Math.floor(
-//             match.nextAiringEpisode.timeUntilAiring / (60 * 60 * 24)),
-//         hours: Math.floor(
-//             match.nextAiringEpisode.timeUntilAiring / (60 * 60)) % 24,
-//         minutes: Math.floor(match.nextAiringEpisode.timeUntilAiring / 60)
-//             % 60,
-//         url: `https://www.timeanddate.com/worldclock/fixedtime.html?iso=${
-//             next.getUTCFullYear().toString().padStart(4, '0')
-//         }${
-//             (next.getUTCMonth() + 1).toString().padStart(2, '0')
-//         }${
-//             next.getUTCDate().toString().padStart(2, '0')
-//         }T${
-//             next.getUTCHours().toString().padStart(2, '0')
-//         }${
-//             next.getUTCMinutes().toString().padStart(2, '0')
-//         }`
-//       }
-//     },
-//     distance: Math.min(...alts.map(alt => wdl(query, alt)))
-//   };
-// }
-
-// const manga1 = {
-//   preprocess(match, query) {
-//     let alts = [
-//       ...Object.values(match.title).filter(title => typeof title === "string"),
-//       ...match.synonyms
-//     ];
-//     return {
-//       alts,
-//       distance: Math.min(...alts.map(alt => wdl(query, alt))),
-//       match
-//     };
-//   }
-// };
-//
-// function manga0(match, query) {
-//   let alts = [
-//     ...Object.values(match.title).filter(title => typeof title === "string"),
-//     ...match.synonyms
-//   ];
-//   return {
-//     title: match.title.romaji,
-//     jp: match.title.native,
-//     alts,
-//     link: `https://anilist.co/manga/${match.id}`,
-//     malLink: `https://myanimelist.net/manga/${match.idMal}`,
-//     format: formatMap[match.format],
-//     year: match.startDate.year,
-//     status: statusMap[match.status],
-//     genres: match.genres.join(", "),
-//     description: match.description,
-//     volumes: match.volumes,
-//     chapters: match.chapters,
-//     distance: Math.min(...alts.map(alt => wdl(query, alt)))
-//   };
-// }
 
 function manga(entry, query="") {
   if (!entry.preprocessed) {
@@ -387,8 +250,3 @@ module.exports = {
     return fromQuery(query, animeQuery, mangaLink);
   }
 }
-
-// (async () => {
-//   let result = await module.exports.animeFromQuery("oshi no ko");
-//   console.log();
-// })().then(() => process.exit());

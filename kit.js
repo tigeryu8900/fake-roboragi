@@ -1,6 +1,4 @@
-const wdl = require("./wdl");
 const utils = require("./utils");
-const {attributeNames} = require("jsdom/lib/jsdom/living/attributes");
 
 const uri = "https://kitsu.io/api/edge";
 const headers = {
@@ -56,12 +54,10 @@ function animeLink(entry) {
 
 async function manga(entry, query="") {
   if (!entry.preprocessed) {
-    entry = preprocess(entry);
+    entry = preprocess(entry, query);
   }
   let match = entry.match;
   let attributes = match.attributes;
-  let genresRes = await fetch(match.relationships.genres.self);
-  let genresMap = await genresMapPromise;
   return {
     title: attributes.titles.en_jp,
     jp: attributes.titles.ja_jp,
@@ -89,10 +85,7 @@ async function fromQuery(query, category, transformer) {
       "filter[text]": query
     }), {
       method: "get",
-      headers: {
-        "Content-Type": "application/vnd.api+json",
-        "Accept": "application/vnd.api+json"
-      }
+      headers
     });
     let matches = (await res.json()).data;
     if (matches.length === 0) {
@@ -114,10 +107,7 @@ async function fromId(id, category, transformer) {
   try {
     let res = await fetch(uri + `/${category}/${id}`, {
       method: "get",
-      headers: {
-        "Content-Type": "application/vnd.api+json",
-        "Accept": "application/vnd.api+json"
-      }
+      headers
     });
     let match = (await res.json()).data;
     if (!match) {

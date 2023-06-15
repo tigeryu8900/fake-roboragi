@@ -103,18 +103,6 @@ async function storeEntry(entries, query, type) {
   }
 }
 
-function escape(unsafe) {
-  if (unsafe === undefined) {
-    console.log();
-  }
-  return String(unsafe)
-  .replaceAll('&', '&amp;')
-  .replaceAll('<', '&lt;')
-  .replaceAll('>', '&gt;')
-  .replaceAll('"', '&quot;')
-  .replaceAll("'", '&#039;');
-}
-
 function entryToText(entry, mode) {
   let expanded = mode === 0 && entry.type === entry.type.toUpperCase();
   let links = entry.links;

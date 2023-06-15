@@ -21,56 +21,6 @@ function getEntry(entries, query) {
   return entry.distance / query.length < 0.5 ? entry : null;
 }
 
-async function fromQuery(query, category) {
-  let win = (await JSDOM.fromURL(`https://www.anime-planet.com/${category}/all?` +
-      new URLSearchParams({name: query}))).window;
-  let $ = jquery(win);
-  if (win.location.pathname === "/anime/all") {
-    let entry = [...$(`li[data-type="${category}"] > a`)].reduce(
-        (acc, a) => {
-          let frag = JSDOM.fragment(a.title);
-          let english = frag.querySelector('h5').textContent;
-          let romaji = frag.querySelector('h6').textContent.slice(11);
-          let [, format, episodes] = frag.querySelector('li.type').textContent.match(/^(.*?)\s*\((\d+) \w+\)$/);
-          episodes = parseInt(episodes);
-          let distance = Math.min(wdl(query, english), wdl(query, romaji));
-          return (distance < acc.distance) ? {
-            link: a.href,
-            title: romaji,
-            frag,
-            distance
-          } : acc;
-        }, {distance: Infinity});
-  }
-}
-
-// async function getLink(query, category) {
-//   try {
-//     let win = (await JSDOM.fromURL(`https://www.anime-planet.com/${category}/all?` +
-//         new URLSearchParams({name: query}))).window;
-//     let $ = jquery(win);
-//     if (win.location.pathname === "/anime/all") {
-//       // [...$(`ul[data-type="${category}"] > li > a`)]
-//       // .map(e => [$(e).find('.cardName').text(), e.href])
-//       // .reduce((acc, x) => ({...acc, [x[0]]: x[1]}), {})
-//       let entry = [...$(`ul[data-type="${category}"] > li > a`)].reduce(
-//           (acc, a) => {
-//             let distance = wdl(query, $(a).find('.cardName').text());
-//             return (distance < acc.distance) ? {
-//               link: a.href,
-//               distance
-//             } : acc;
-//           }, {distance: Infinity});
-//       if (!entry) {
-//         return null;
-//       }
-//       return entry.distance / query.length < 0.5 ? entry.link : null;
-//     } else {}
-//   } catch (e) {
-//     return null;
-//   }
-// }
-
 async function getLink(query, category) {
   let win = (await JSDOM.fromURL(`https://www.anime-planet.com/${category}/all?` +
       new URLSearchParams({name: query}))).window;
