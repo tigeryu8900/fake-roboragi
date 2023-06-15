@@ -1,4 +1,3 @@
-const wdl = require("./wdl");
 const utils = require("./utils");
 
 const uri = "https://graphql.anilist.co";
@@ -86,7 +85,7 @@ function preprocess(match, query) {
     ...Object.values(match.title).filter(title => typeof title === "string"),
     ...match.synonyms
   ]);
-};
+}
 
 // const anime1 = {
 //   preprocess(match, query) {
@@ -276,7 +275,7 @@ function animeLink(entry) {
 
 function manga(entry, query="") {
   if (!entry.preprocessed) {
-    entry = preprocess(entry);
+    entry = preprocess(entry, query);
   }
   let match = entry.match;
   return {
