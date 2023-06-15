@@ -222,7 +222,7 @@ ${NodeHtmlMarkdown.translate(`<blockquote>${data.description}</blockquote>`)}
             promises.push((async () => {
               console.log("handling message", message);
               let body = message.data.body;
-              if (message.kind !== "t1" || body.search(mentionStr) < 0) {
+              if (!(message instanceof NRAW.T1) || body.search(mentionStr) < 0) {
                 return;
               }
               let entries = new Map();
