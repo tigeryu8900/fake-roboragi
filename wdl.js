@@ -16,7 +16,6 @@ const keyboard = {
 };
 
 const alphaNumPattern = /[A-Za-zÀ-ÖØ-öø-ÿ0-9\u3040-\u309f\u30a0-\u30ff\uff00-\uff9f\u4e00-\u9faf\u3400-\u4dbf]/;
-const alphaNumGlobalPattern = /[A-Za-zÀ-ÖØ-öø-ÿ0-9\u3040-\u309f\u30a0-\u30ff\uff00-\uff9f\u4e00-\u9faf\u3400-\u4dbf]/g;
 const nonAlphaNumWeight = 0.2;
 const closeChars = [
   new Set(['"', '“', '”', '„', '“', '”']),
@@ -51,12 +50,12 @@ module.exports = function wdl(s1, s2, useDamerau = true) {
   s1 = s1.normalize();
   s2 = s2.normalize();
   if (s1.length === 0) {
-    let c = s2.match(alphaNumGlobalPattern)?.length ?? 0;
+    let c = s2.match(new RegExp(alphaNumPattern, 'g'))?.length ?? 0;
     return c + nonAlphaNumWeight * (s2.length - c);
   }
 
   if (s2.length === 0) {
-    let c = s1.match(alphaNumGlobalPattern)?.length ?? 0;
+    let c = s1.match(new RegExp(alphaNumPattern, 'g'))?.length ?? 0;
     return c + nonAlphaNumWeight * (s1.length - c);
   }
 

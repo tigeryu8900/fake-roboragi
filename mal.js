@@ -5,8 +5,6 @@ const utils = require("./utils");
 const wdl = require("./wdl");
 
 const fieldPattern = /^\s*.*?:\s*(.*\S)\s*$/;
-const repeatPattern = /\b(\w+)\s*\1\b/g;
-const whitespacePattern = /\s+/g;
 const yearPattern = /\d{4}/;
 const occurrencePattern = /(\w+day)s at (\d{2}):(\d{2}) \(\w+\)/;
 const airedPattern = /(\w+) (\d+), (\d+) to (\w+) (\d+), (\d+)/;
@@ -112,7 +110,7 @@ async function processEntry(entry) {
     .text().match(fieldPattern) ?? [])[1]?.split(' ')[0]],
     genres: (entry.leftside
     .children('div.spaceit_pad:has(> span.dark_text:contains("Genres:"))')
-    .text().replace(repeatPattern, "$1").replace(whitespacePattern, " ")
+    .text().replace(/\b(\w+)\s*\1\b/g, "$1").replace(/\s+/g, " ")
     .match(fieldPattern) ?? [])[1]?.split(/\s*,\s*/),
     description: entry.$('[itemprop="description"]').html(),
   } : null;
