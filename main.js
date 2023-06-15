@@ -217,7 +217,7 @@ ${NodeHtmlMarkdown.translate(`<blockquote>${data.description}</blockquote>`)}
       let promises = [];
       try {
         await promise;
-        for await (let message of reddit.message_unread()) {
+        for await (let message of await reddit.message_unread()) {
           try {
             promises.push((async () => {
               console.log("handling message", message);
