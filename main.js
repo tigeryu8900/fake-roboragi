@@ -277,7 +277,7 @@ ${NodeHtmlMarkdown.translate(`<blockquote>${data.description}</blockquote>`)}
 
 ^(\{anime\}, \<manga\>, \]LN\[${entries.size > 10
                   ? String.raw`\(${entries.size}/${count}\)` : ""})`;
-              await message.reply(commentReply);
+              await message.reply(commentReply.trim());
             } catch (e) {
               console.error(e);
             } finally {
