@@ -150,7 +150,7 @@ function manga(entry, query="") {
     format: formatMap[match.format],
     year: match.startDate.year,
     status: statusMap[match.status],
-    genres: match.genres.join(", "),
+    genres: match.genres,
     description: match.description,
     volumes: match.volumes,
     chapters: match.chapters,

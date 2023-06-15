@@ -1,6 +1,7 @@
 const fs = require("fs");
 const NRAW = require("node-reddit-api-wrapper");
 const {NodeHtmlMarkdown} = require("node-html-markdown");
+const {JSDOM} = require("jsdom");
 const markdownEscape = str => require('markdown-escape')(String(str));
 
 require("dotenv").config();
@@ -218,8 +219,8 @@ ${NodeHtmlMarkdown.translate(`<blockquote>${data.description}</blockquote>`)}
       try {
         await promise;
         for await (let message of await reddit.message_unread()) {
-          try {
-            promises.push((async () => {
+          promises.push((async () => {
+            try {
               console.log("handling message", message);
               let body = message.data.body;
               if (!(message instanceof NRAW.T1) || body.search(mentionStr) < 0) {
@@ -227,7 +228,7 @@ ${NodeHtmlMarkdown.translate(`<blockquote>${data.description}</blockquote>`)}
               }
               let entries = new Map();
               let count = 0;
-              for (let {groups} of body.matchAll(
+              for (let {groups} of JSDOM.fragment(`<a title="${body}"></a>`).querySelector('a').title.matchAll(
                   /(?<!\{)\{(?<anime>[^{}\n]+)}|\{\{(?<ANIME>[^{}\n]+)}}|(?<!<)<(?<manga>[^<>\n]+)>|<<(?<MANGA>[^<>\n]+)>>|(?<!])](?<light>[^\]\[\n]+)\[|]](?<LIGHT>[^\]\[\n]+)\[\[/g)) {
                 if (entries.size > 30) {
                   break;
@@ -277,16 +278,16 @@ ${NodeHtmlMarkdown.translate(`<blockquote>${data.description}</blockquote>`)}
 ^(\{anime\}, \<manga\>, \]LN\[${entries.size > 10
                   ? String.raw`\(${entries.size}/${count}\)` : ""})`;
               await message.reply(commentReply);
-            })());
-          } catch (e) {
-            console.error(e);
-          } finally {
-            try {
-              await message.read();
             } catch (e) {
               console.error(e);
+            } finally {
+              try {
+                await message.read();
+              } catch (e) {
+                console.error(e);
+              }
             }
-          }
+          })());
         }
       } catch (e) {
         console.error(e);
