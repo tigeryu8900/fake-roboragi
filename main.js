@@ -21,6 +21,7 @@ const methods = {
       link: AL.getAnimeLink
     },
     AP: {
+      query: AP.animeFromQuery,
       link: AP.getAnimeLink
     },
     KIT: {
@@ -38,6 +39,7 @@ const methods = {
       link: AL.getMangaLink
     },
     AP: {
+      query: AP.mangaFromQuery,
       link: AP.getMangaLink
     },
     KIT: {
@@ -55,6 +57,7 @@ const methods = {
       link: AL.getlightLink
     },
     AP: {
+      query: AP.mangaFromQuery,
       link: AP.getMangaLink
     },
     KIT: {
@@ -75,7 +78,7 @@ async function storeEntryHelper(entries, data, type, linksLambda) {
       entry.type = type;
     }
   } else {
-    entries.set(data.link, {type, links: await linksLambda(), data})
+    entries.set(data.link, {type, links: await linksLambda(), data});
   }
 }
 
@@ -99,6 +102,10 @@ async function storeEntry(entries, query, type) {
     await storeEntryHelper(entries, data, type, async () => ({
       MAL: data.link,
       AP: await method.AP.link(query),
+    }));
+  } else if ((data = await method.AP.query(query))) {
+    await storeEntryHelper(entries, data, type, async () => ({
+      AP: data.link,
     }));
   }
 }
@@ -145,9 +152,11 @@ function entryToText(entry, mode) {
     }
     return `
 **${markdownEscape(data.title)}** - (${linkTexts.join(", ")})
-
+${
+      data.jp ? `
 ^(${markdownEscape(data.jp)})
-
+` : ""
+    }
 ^(${info.join(" \\| ")})
 ${
         data.next && data.nextEpisode ? String.raw`
