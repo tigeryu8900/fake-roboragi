@@ -1,7 +1,6 @@
 const fs = require("fs");
 const NRAW = require("node-reddit-api-wrapper");
 const {NodeHtmlMarkdown} = require("node-html-markdown");
-const {JSDOM} = require("jsdom");
 const markdownEscape = str => require('markdown-escape')(String(str));
 
 require("dotenv").config();
@@ -12,6 +11,9 @@ const KIT = require("./kit");
 const MAL = require("./mal");
 
 const mentionStr = "u/" + process.env.REDDIT_USERNAME;
+
+const userBlacklist = ["AutoModerator"];
+const subredditBlacklist = ["anime"];
 
 let promise = Promise.resolve();
 
@@ -154,7 +156,7 @@ function entryToText(entry, mode) {
     return `
 **${markdownEscape(data.title)}** - (${linkTexts.join(", ")})
 ${
-      data.jp ? `
+        data.jp ? `
 ^(${markdownEscape(data.jp)})
 ` : ""
     }
@@ -204,6 +206,85 @@ ${NodeHtmlMarkdown.translate(`<blockquote>${data.description}</blockquote>`)}
   }
 }
 
+async function messageHandler(message) {
+  try {
+    console.log("handling message", message);
+    let body = message.body();
+    let isSelf = message.data.author === process.env.REDDIT_USERNAME;
+    if (!(message instanceof NRAW.T1) || body.search("!sauce") < 0 || (!isSelf
+        && body.search(mentionStr) < 0) || userBlacklist.includes(
+        message.data.author) || subredditBlacklist.includes(
+        message.data.subreddit)) {
+      return;
+    }
+    let entries = new Map();
+    let count = 0;
+    for (let {groups} of body.matchAll(
+        /(?<!\{)\{(?<anime>[^{}\n]+)}|\{\{(?<ANIME>[^{}\n]+)}}|(?<!<)<(?<manga>[^<>\n]+)>|<<(?<MANGA>[^<>\n]+)>>|(?<!])](?<light>[^\]\[\n]+)\[|]](?<LIGHT>[^\]\[\n]+)\[\[/g)) {
+      if (entries.size > 30) {
+        break;
+      } else {
+        ++count;
+      }
+      switch (false) {
+        case !groups.anime:
+          await storeEntry(entries, groups.anime, "anime");
+          break;
+        case !groups.ANIME:
+          await storeEntry(entries, groups.ANIME, "ANIME");
+          break;
+        case !groups.manga:
+          await storeEntry(entries, groups.manga, "manga");
+          break;
+        case !groups.MANGA:
+          await storeEntry(entries, groups.MANGA, "MANGA");
+          break;
+        case !groups.light:
+          await storeEntry(entries, groups.light, "light");
+          break;
+        case !groups.LIGHT:
+          await storeEntry(entries, groups.LIGHT, "LIGHT");
+          break;
+      }
+    }
+    let commentReply = "";
+    if (entries.size === 0) {
+      return;
+    } else if (entries.size === 1) {
+      commentReply += entryToText(entries.values().next().value, 0);
+    } else if (entries.size <= 10) {
+      for (let entry of entries.values()) {
+        commentReply += entryToText(entry, 1);
+      }
+    } else {
+      for (let entry of entries.values()) {
+        commentReply += entryToText(entry, 2);
+      }
+    }
+    commentReply += String.raw`
+---
+
+^(**If you want me to comment the sauce, just mention me and include !sauce and the title in Roboragi style in your comment.**)
+
+^(\{anime\}, \<manga\>, \]LN\[${entries.size > 10
+        ? String.raw`\(${entries.size}/${count}\)` : ""})`;
+
+    commentReply = commentReply.trim();
+    if (isSelf) {
+      if (body.search("!!sauce") < 0) {
+        await message.append("\n\n---\n\n" + commentReply);
+      } else {
+        await message.edit(commentReply);
+      }
+    } else {
+      await message.reply(commentReply.trim());
+      await message.read();
+    }
+  } catch (e) {
+    console.error(e);
+  }
+}
+
 (async () => {
   console.log("logging in...");
   const reddit = fs.existsSync("./cookies.json") ?
@@ -213,81 +294,31 @@ ${NodeHtmlMarkdown.translate(`<blockquote>${data.description}</blockquote>`)}
   reddit.saveCookies("./cookies.json");
   console.log("logged in");
 
-  const runner = () => {
+  let paramsSelf = {
+    "sort": "new",
+    "before": (await NRAW.Listing.fromPath(reddit,
+        `/user/${process.env.REDDIT_USERNAME}/comments.json`,
+        {"sort": "new"})).first().data.name
+  };
+
+  let paramsUnread = {
+    "sort": "new",
+    "before": (await reddit.message_unread({"sort": "new"})).first().data.name
+  };
+
+  function runner() {
     promise = new Promise(async resolve => {
       let promises = [];
       try {
         await promise;
-        for await (let message of await reddit.message_unread()) {
-          promises.push((async () => {
-            try {
-              console.log("handling message", message);
-              let body = message.data.body;
-              if (!(message instanceof NRAW.T1) || body.search(mentionStr) < 0) {
-                return;
-              }
-              let entries = new Map();
-              let count = 0;
-              for (let {groups} of JSDOM.fragment(`<a title="${body}"></a>`).querySelector('a').title.matchAll(
-                  /(?<!\{)\{(?<anime>[^{}\n]+)}|\{\{(?<ANIME>[^{}\n]+)}}|(?<!<)<(?<manga>[^<>\n]+)>|<<(?<MANGA>[^<>\n]+)>>|(?<!])](?<light>[^\]\[\n]+)\[|]](?<LIGHT>[^\]\[\n]+)\[\[/g)) {
-                if (entries.size > 30) {
-                  break;
-                } else {
-                  ++count;
-                }
-                switch (false) {
-                  case !groups.anime:
-                    await storeEntry(entries, groups.anime, "anime");
-                    break;
-                  case !groups.ANIME:
-                    await storeEntry(entries, groups.ANIME, "ANIME");
-                    break;
-                  case !groups.manga:
-                    await storeEntry(entries, groups.manga, "manga");
-                    break;
-                  case !groups.MANGA:
-                    await storeEntry(entries, groups.MANGA, "MANGA");
-                    break;
-                  case !groups.light:
-                    await storeEntry(entries, groups.light, "light");
-                    break;
-                  case !groups.LIGHT:
-                    await storeEntry(entries, groups.LIGHT, "LIGHT");
-                    break;
-                }
-              }
-              let commentReply = "";
-              if (entries.size === 0) {
-                return;
-              } else if (entries.size === 1) {
-                commentReply += entryToText([...entries.values()][0], 0);
-              } else if (entries.size <= 10) {
-                for (let entry of entries.values()) {
-                  commentReply += entryToText(entry, 1);
-                }
-              } else {
-                for (let entry of entries.values()) {
-                  commentReply += entryToText(entry, 2);
-                }
-              }
-              commentReply += String.raw`
----
-
-^(**Important note: this is a crappy version of Roboragi. Expect it to go down anytime.**)
-
-^(\{anime\}, \<manga\>, \]LN\[${entries.size > 10
-                  ? String.raw`\(${entries.size}/${count}\)` : ""})`;
-              await message.reply(commentReply.trim());
-            } catch (e) {
-              console.error(e);
-            } finally {
-              try {
-                await message.read();
-              } catch (e) {
-                console.error(e);
-              }
-            }
-          })());
+        for await (let message of await reddit.message_unread(paramsUnread)) {
+          paramsUnread.before = message?.data?.name ?? paramsUnread.before;
+          promises.push(messageHandler(message));
+        }
+        for await (let message of await NRAW.Listing.fromPath(reddit,
+            `/user/${process.env.REDDIT_USERNAME}/comments.json`, paramsSelf)) {
+          paramsSelf.before = message?.data?.name ?? paramsSelf.before;
+          promises.push(messageHandler(message));
         }
       } catch (e) {
         console.error(e);
@@ -301,9 +332,9 @@ ${NodeHtmlMarkdown.translate(`<blockquote>${data.description}</blockquote>`)}
         }
       }
     });
-  };
+  }
 
-  runner();
+  // runner();
 
   const intervalId = setInterval(runner, 1000 * 60);
 
