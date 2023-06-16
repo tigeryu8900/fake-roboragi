@@ -339,6 +339,7 @@ async function messageHandler(message) {
   const intervalId = setInterval(runner, 1000 * 60);
 
   async function shutdown() {
+    process.stdin.setRawMode(false);
     console.log("shutting down...");
     clearInterval(intervalId);
     await promise;
@@ -347,6 +348,20 @@ async function messageHandler(message) {
     console.log("done");
     process.exit();
   }
+
+  process.stdin.setRawMode(true);
+  process.stdin.on('data', data => {
+    switch (data.toString()) {
+      case "\r":
+      case "\n":
+      case "\r\n":
+        runner();
+        break;
+      case "\x03":
+        shutdown();
+        break;
+    }
+  });
 
   process.on('SIGINT', shutdown);
   process.on('SIGQUIT', shutdown);
