@@ -7,8 +7,8 @@ function getEntry(entries, query) {
   let entry = [...entries].reduce(
       (acc, a) => {
         let frag = JSDOM.fragment(a.title.trim());
-        let english = frag.querySelector('h5').textContent.trim();
-        let romaji = frag.querySelector('h6').textContent.slice(11).trim();
+        let english = frag.querySelector('h5')?.textContent?.trim();
+        let romaji = frag.querySelector('h6')?.textContent?.slice(11)?.trim() ?? english;
         let distance = Math.min(wdl(query, english), wdl(query, romaji));
         return (distance < acc.distance) ? {
           link: a.href,
